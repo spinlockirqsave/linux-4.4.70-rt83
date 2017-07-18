@@ -6,6 +6,21 @@
 
 #include <linux/tracepoint.h>
 
+/*
+ * Tracepoint for calling from various places inside Comedi.
+ * Takes simple id and prints it to the trace log if trace
+ * events from Comedi are enabled.
+ *
+ * Currently following tracepoints are in use:
+ *
+ * Id : Description
+ * 0	Enter the interrupt of amplc_dio200_common
+ * 1	Called from same ISR of amplc_dio200_common if IRQ is handled
+ *
+ * If you would like to add new tracepoint just add a call to
+ *	trace_comedi_event(id)
+ * with id incremented.
+ */
 TRACE_EVENT(comedi_event,
 	TP_PROTO(__u8 id),
 	TP_ARGS(id),
