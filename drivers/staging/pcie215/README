@@ -1,0 +1,146 @@
+
+1. PCIE215
+2. IOCTL
+    2.1. PCIE215_IOCTL_IRQ_DISABLE
+    2.2. PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE
+    2.3. PCIE215_IOCTL_IRQ_TRIGGERS_DISABLE
+3. MODULE PARAMETERS
+4. COMPILATION
+    4.1 In-tree compilation
+    4.2 Out-of-tree compilation
+5. INSTALLATION AND USAGE
+6. DEBUG/LOGGING
+7. EXAMPLES
+
+
+1.	PCIE215
+
+This is a driver for Amplicon's PCIe215 digital I/O board.
+It configures the board to interrupt the CPU when signal
+on one of board's pins has been asserted.
+Ioctl calls are used to specify these pins.
+
+
+2.	IOCTL
+
+Driver implements three ioctl:
+
+2.1.	PCIE215_IOCTL_IRQ_ENABLE
+		This call enables/disables interrupt generation by board's fpga,
+		Altera Cyclone IV. It accepts 8-bit integer argument (0 - disable, 1 - enable).
+		Usage:
+			ioctl(fd, PCIE215_IOCTL_IRQ_ENABLE, 0);
+				Disables interrupts.
+			ioctl(fd, PCIE215_IOCTL_IRQ_ENABLE, 1);
+				Enables interrupts.
+
+2.2.	PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE
+		This call enables interrupts on specific pins passed as function argument.
+		Argument is an 8 bit unsigned integer, with bits set to 1 to enable
+		triggering:
+			1	Enable PPI X C0			(pin 44)
+			2	Enable PPI X C3			(pin 24)
+			4	Enable PPI Y C0			(pin 70)
+			8	Enable PPI Y C3			(pin 11)
+			16	Enable CTRZ1 OUT1 O/P	(pin 55)
+			32	Enable CTRZ2 OUT1 O/P	(pin 58)
+
+2.3.	PCIE215_IOCTL_IRQ_TRIGGERS_DISABLE
+		This call disables triggering on specified pins. 8-bit argument has the same
+		meaning as for the PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE.
+
+
+3.	MODULE PARAMETERS
+
+Module accepts one optional parameter: triggers. This parameter may be passed
+to insmod and/or modprobe to set enabled IRQ triggers at module load time.
+Interruption triggering is also started in that case (if triggers != 0).
+It's meaning is the same as the meaning of the argument used with ioctl
+PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE and the end result is as both
+PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE and PCIE215_IOCTL_IRQ_ENABLE were called.
+
+This parameter is exported to the sysfs and is available under
+/sys/module/pcie215/parameters/triggers for reading. It is read-only
+and is not updated when triggers are changed - it simply contains
+the initial triggers.
+
+
+4.	COMPILATION
+
+4.1 In-tree compilation
+
+To compile the module in kernel tree please execute
+	make modules SUBDIRS=drivers/staging/pcie215
+from root kernel directory.
+
+4.2 Out-of-tree compilation
+
+To compile module as a standalone module you need to have Linux
+kernel headers installed for your kernel. You can install them
+through package manager like Synaptic or
+	sudo apt-get install linux-headers-`uname -r`
+
+To compile driver please execute
+    make -f Makefile_out_of_tree CONFIG_PCIE215=m
+from within module directory.
+
+
+5.	INSTALLATION AND USAGE
+
+To load the module with interrupt triggering disabled
+	insmod pcie215.ko
+
+To load the module with given triggers enabled
+	insmod pcie215.ko triggers=X
+
+where X is an 8-bit integer enabling the IRQ triggers
+(if insmod with parameter triggers=X is used please ensure
+dmesg | tail reports success
+"pcie215_probe: Enabled IRQ generation and triggers [X]"
+to confirm there was no errors with misspelled paramter name, etc.).
+
+Additional information about the driver:
+	modinfo pcie215
+
+The simplest use case is:
+
+	1. Application opens driver
+		fd = open(PCIE215, O_RDWR);
+
+	2. And specifies enabled IRQ triggers
+		ioctl(fd, PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE, triggers);
+
+	3. Enables interrupt generation by PCIe215's Altera Cyclone IV fpga
+		ioctl(fd, PCIE215_IOCTL_IRQ_ENABLE, 1);
+
+	4. Application executes read() call and is blocked in that call
+	waiting for external signal being asserted on one of configured
+	triggers (likely in loop)
+		read(fd, NULL, 0);
+
+	5. When signal on any of the pins of interest has been asserted,
+	CPU is interrupted and driver wakes up the user space process.
+	Sleep is interruptible so signal queued for the process will
+	wake up the process too.
+
+
+6.	EXAMPLES
+
+insmod pcie215.ko triggers=1
+	Load module and enable interrupt triggering on the pin 44, PPI-X-C0.
+
+insmod pcie215.ko triggers=4
+	Load module and enable interrupt triggering on the pin 70, PPI-Y-C0.
+
+insmod pcie215.ko triggers=63
+	Load module and enable interrupt triggering on all 6 pins.
+
+
+7.	DEBUG/LOGGING
+
+Module will print information on the IRQ sources which triggered interrupt,
+the number of IRQs and number of spurious IRQs if compiled with DEBUG flag.
+	cd linux-2.6
+	make modules SUBDIRS=drivers/staging/pcie215 EXTRA_CFLAGS="-DDEBUG"
+
+

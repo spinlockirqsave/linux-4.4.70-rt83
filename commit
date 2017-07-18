@@ -1,0 +1,88 @@
+This patch originates from the need to measure latency
+introduced by driver for Amplicon's PCIE215 during interrupt
+handling.
+
+Added is a single ftrace event:
+
+TRACE_EVENT(comedi_event,
+	TP_PROTO(__u8 id),
+	TP_ARGS(id),
+	TP_STRUCT__entry(
+			 __field(__u8, id)
+			),
+	TP_fast_assign(
+		       __entry->id = id;
+		       ),
+	TP_printk("[%u]", __entry->id)
+);
+
+Event can be raised from multiple places in code
+and when read from trace log and disambiguated by id
+allows for latency (timing) measurement between
+corresponding points in code.
+
+Event with id 0 has been put inside amplc_dio200_common
+interrupt handler to mark ISR entry. Event with id 1
+has been put right after previous one to mark cases when
+IRQ is handled.
+
+Example
+
+By enabling triggering of Comedi ftrace events and sched_wakeup event
+
+	cd /sys/kernel/debug/tracing
+	echo 1 > events/comedi/enable
+	echo 1 > events/sched/sched_wakeup/enable
+	echo nop > trace
+		start the program using Comedi to execute blocking read
+		to sense the signal asserted on pin PPI_Y_C0 of PCIE215
+	echo 1 > tracing_on
+	echo 0 > tracing_on
+	vim trace
+
+and by analysing the content of produced trace file
+
+(...)
+35732           <idle>-0     [001] dN..3..  7470.471776: sched_wakeup: comm=ktimersoftd/1 pid=19 prio=98 target_cpu=001
+35733           <idle>-0     [005] dN..3..  7470.471784: sched_wakeup: comm=ktimersoftd/5 pid=51 prio=98 target_cpu=005
+35734   irq/19-pcie215-7661  [005] .....11  7470.471802: comedi_event: [0]
+35735   irq/19-pcie215-7661  [005] .....11  7470.471803: comedi_event: [1]
+35736           <idle>-0     [004] dN.h3..  7470.471820: sched_wakeup: comm=rcuc/4 pid=42 prio=120 target_cpu=004
+35737           <idle>-0     [002] dN.h3..  7470.471820: sched_wakeup: comm=rcuc/2 pid=26 prio=120 target_cpu=002
+35738           <idle>-0     [003] dN.h3..  7470.471820: sched_wakeup: comm=rcuc/3 pid=34 prio=120 target_cpu=003
+35739           <idle>-0     [007] dN.h3..  7470.471820: sched_wakeup: comm=rcuc/7 pid=66 prio=120 target_cpu=007
+35740           <idle>-0     [000] dN.h3..  7470.471821: sched_wakeup: comm=rcuc/0 pid=10 prio=120 target_cpu=000
+35741           <idle>-0     [006] dN..3..  7470.471824: sched_wakeup: comm=ktimersoftd/6 pid=59 prio=98 target_cpu=006
+35742           <idle>-0     [003] dN..3..  7470.471840: sched_wakeup: comm=ksoftirqd/3 pid=36 prio=120 target_cpu=003
+35743           <idle>-0     [002] dN..3..  7470.471840: sched_wakeup: comm=ktimersoftd/2 pid=27 prio=98 target_cpu=002
+35744           <idle>-0     [000] dN..3..  7470.471841: sched_wakeup: comm=ktimersoftd/0 pid=4 prio=98 target_cpu=000 
+35745           <idle>-0     [004] dN..3..  7470.471843: sched_wakeup: comm=ktimersoftd/4 pid=43 prio=98 target_cpu=004
+35746           <idle>-0     [007] dN..3..  7470.471845: sched_wakeup: comm=ktimersoftd/7 pid=67 prio=98 target_cpu=007
+35747           <idle>-0     [003] dN..3..  7470.471849: sched_wakeup: comm=ktimersoftd/3 pid=35 prio=98 target_cpu=003
+35748   irq/19-pcie215-7661  [005] d...213  7470.471859: sched_wakeup: comm=txrx pid=7683 prio=120 target_cpu=001
+35749             txrx-7683  [001] d...313  7470.472163: sched_wakeup: comm=kworker/u16:3 pid=3444 prio=120 target_cpu=003
+35750             txrx-7683  [001] d...313  7470.472270: sched_wakeup: comm=kworker/u16:1 pid=20072 prio=120 target_cpu=006
+35751    kworker/u16:3-3444  [003] d...211  7470.472280: sched_wakeup: comm=mate-terminal pid=1465 prio=120 target_cpu=002
+35752    mate-terminal-1465  [002] dN..2..  7470.472766: sched_wakeup: comm=ktimersoftd/2 pid=27 prio=98 target_cpu=002
+35753           <idle>-0     [006] dN..3..  7470.472766: sched_wakeup: comm=ktimersoftd/6 pid=59 prio=98 target_cpu=006
+(...)
+
+it has been found that on the sample of 625 interrupts the worse
+case latency for Comedi driver to wake up the sleeper on a blocking
+call to read() was 80 microseconds (19.31 us on average).
+
+wakeup latency (all in seconds)
+Mean			0.000 019 315
+Standard Error	3.127172298894E-007
+Mode			0.000 016 000
+Median			0.000 017 000
+Variance		6.11200411685624E-011
+Standard Deviation	0.000 007 818
+Kurtosis		8.9662160643
+Skewness		2.333413546
+Range			0.000 070 000
+Minimum			0.000 010 000
+Maximum			0.000 080 000
+Sum				0.012072
+Count			625
+

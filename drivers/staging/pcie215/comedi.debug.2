@@ -1,0 +1,78 @@
+[63508.653464] comedi: module is from the staging directory, the quality is unknown, you have been warned.
+[63508.656802] comedi: version 0.7.76 - http://www.comedi.org
+[63508.657212] comedi_pci: module is from the staging directory, the quality is unknown, you have been warned.
+[63508.691319] comedi_8254: module is from the staging directory, the quality is unknown, you have been warned.
+[63508.728517] amplc_dio200_common: module is from the staging directory, the quality is unknown, you have been warned.
+[63508.729196] amplc_dio200_pci: module is from the staging directory, the quality is unknown, you have been warned.
+[63508.729549] dio200_pci_probe:
+[63508.729554] comedi_pci_auto_config:
+[63508.729559] comedi_auto_config:
+[63508.729721] dio200_pci_auto_attach:
+[63508.729731] comedi comedi0: amplc_dio200_pci: attach pci 0000:01:00.0 (pcie215)
+[63508.729936] amplc_dio200_set_enhance:
+[63508.729943] dio200_write8: -> writeb val [ 1] address [ffffc90000548100] offset [00000100]
+[63508.729946] amplc_dio200_common_attach:
+[63508.729951] dio200_subdev_8255_init: offset [0000]
+[63508.729956] dio200_subdev_8255_set_dir: subpriv->ofs [00000000] I8255_CTRL_REG [00000003] config [0000009b]
+[63508.729959] dio200_write8: -> writeb val [9b] address [ffffc90000548018] offset [00000018]
+[63508.729964] dio200_subdev_8255_init: offset [0008]
+[63508.729967] dio200_subdev_8255_set_dir: subpriv->ofs [00000008] I8255_CTRL_REG [00000003] config [0000009b]
+[63508.729972] dio200_write8: -> writeb val [9b] address [ffffc90000548058] offset [00000058]
+[63508.729974] dio200_subdev_8254_init: offset [0010]
+[63508.729979] __i8254_init: iobase [00000000], iosize [0001] regshift [0003]
+[63508.729982] __i8254_write: -> outb val [30] reg [00000003]
+[63508.729987] __i8254_write: -> writeb val [30] address [ffffc90000548098] reg_offset [00000018]
+[63508.729990] __i8254_write: -> outb val [70] reg [00000003]
+[63508.729995] __i8254_write: -> writeb val [70] address [ffffc90000548098] reg_offset [00000018]
+[63508.729998] __i8254_write: -> outb val [b0] reg [00000003]
+[63508.730001] __i8254_write: -> writeb val [b0] address [ffffc90000548098] reg_offset [00000018]
+[63508.730003] comedi_8254_subdevice_init:
+[63508.730008] dio200_subdev_8254_set_gate_src: chan [00000000] src [00000000]
+[63508.730011] dio200_write8: -> writeb val [ 0] address [ffffc900005480e8] offset [000000e8]
+[63508.730014] dio200_subdev_8254_set_clock_src: chan [00000000] src [00000000]
+[63508.730018] dio200_write8: -> writeb val [ 0] address [ffffc900005480d0] offset [000000d0]
+[63508.730022] dio200_subdev_8254_set_gate_src: chan [00000001] src [00000000]
+[63508.730024] dio200_write8: -> writeb val [ 8] address [ffffc900005480e8] offset [000000e8]
+[63508.730029] dio200_subdev_8254_set_clock_src: chan [00000001] src [00000000]
+[63508.730032] dio200_write8: -> writeb val [ 8] address [ffffc900005480d0] offset [000000d0]
+[63508.730037] dio200_subdev_8254_set_gate_src: chan [00000002] src [00000000]
+[63508.730040] dio200_write8: -> writeb val [10] address [ffffc900005480e8] offset [000000e8]
+[63508.730044] dio200_subdev_8254_set_clock_src: chan [00000002] src [00000000]
+[63508.730047] dio200_write8: -> writeb val [10] address [ffffc900005480d0] offset [000000d0]
+[63508.730050] dio200_subdev_8254_init: offset [0014]
+[63508.730053] __i8254_init: iobase [00000000], iosize [0001] regshift [0003]
+[63508.730058] __i8254_write: -> outb val [30] reg [00000003]
+[63508.730061] __i8254_write: -> writeb val [30] address [ffffc900005480b8] reg_offset [00000018]
+[63508.730065] __i8254_write: -> outb val [70] reg [00000003]
+[63508.730068] __i8254_write: -> writeb val [70] address [ffffc900005480b8] reg_offset [00000018]
+[63508.730073] __i8254_write: -> outb val [b0] reg [00000003]
+[63508.730076] __i8254_write: -> writeb val [b0] address [ffffc900005480b8] reg_offset [00000018]
+[63508.730079] comedi_8254_subdevice_init:
+[63508.730081] dio200_subdev_8254_set_gate_src: chan [00000000] src [00000000]
+[63508.730086] dio200_write8: -> writeb val [20] address [ffffc900005480e8] offset [000000e8]
+[63508.730089] dio200_subdev_8254_set_clock_src: chan [00000000] src [00000000]
+[63508.730094] dio200_write8: -> writeb val [20] address [ffffc900005480d0] offset [000000d0]
+[63508.730097] dio200_subdev_8254_set_gate_src: chan [00000001] src [00000000]
+[63508.730102] dio200_write8: -> writeb val [28] address [ffffc900005480e8] offset [000000e8]
+[63508.730104] dio200_subdev_8254_set_clock_src: chan [00000001] src [00000000]
+[63508.730109] dio200_write8: -> writeb val [28] address [ffffc900005480d0] offset [000000d0]
+[63508.730112] dio200_subdev_8254_set_gate_src: chan [00000002] src [00000000]
+[63508.730115] dio200_write8: -> writeb val [30] address [ffffc900005480e8] offset [000000e8]
+[63508.730118] dio200_subdev_8254_set_clock_src: chan [00000002] src [00000000]
+[63508.730123] dio200_write8: -> writeb val [30] address [ffffc900005480d0] offset [000000d0]
+[63508.730125] amplc_dio200_common_attach: offset [sd_timer]
+[63508.730128] dio200_subdev_intr_init: offset [001e]
+[63508.730133] dio200_write8: -> writeb val [ 0] address [ffffc900005480f0] offset [000000f0]
+[63508.731468] comedi comedi0: driver 'amplc_dio200_pci' has successfully auto-configured 'pcie215'.
+[63556.040875] dio200_read8: -> readb address [ffffc900005480f0] offset [000000f0]
+[63584.603340] _logsts 1: [pcihsd_ioctl] [1140] [13] [0] [0]
+[63584.603367] _logsts 1: [pcihsd_ioctl] [1140] [13] [0] [0]
+[63584.603400] dio200_write8: -> writeb val [ 1] address [ffffc900005480f0] offset [000000f0]
+[63584.609122] dio200_read8: -> readb address [ffffc900005480f0] offset [000000f0]
+[63584.609132] dio200_write8: -> writeb val [ 0] address [ffffc900005480f0] offset [000000f0]
+[63584.609136] dio200_read8: -> readb address [ffffc900005480f0] offset [000000f0]
+[63584.609143] dio200_write8: -> writeb val [ 1] address [ffffc900005480f0] offset [000000f0]
+[63584.641896] dio200_read8: -> readb address [ffffc900005480f0] offset [000000f0]
+[63584.641906] dio200_write8: -> writeb val [ 0] address [ffffc900005480f0] offset [000000f0]
+[63584.641910] dio200_read8: -> readb address [ffffc900005480f0] offset [000000f0]
+

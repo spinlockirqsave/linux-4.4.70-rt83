@@ -1,0 +1,75 @@
+[61092.170930] comedi: module is from the staging directory, the quality is unknown, you have been warned.
+[61092.173865] comedi: version 0.7.76 - http://www.comedi.org
+[61102.696639] comedi_pci: module is from the staging directory, the quality is unknown, you have been warned.
+[61120.343712] comedi_8254: module is from the staging directory, the quality is unknown, you have been warned.
+[61120.348849] amplc_dio200_common: module is from the staging directory, the quality is unknown, you have been warned.
+[61120.350357] amplc_dio200_pci: module is from the staging directory, the quality is unknown, you have been warned.
+[61120.356209] comedi comedi0: amplc_dio200_pci: attach pci 0000:01:00.0 (pcie215)
+[61120.356581] dio200_write8: -> writeb val [ 1] address [00548100] offset [00000100]
+[61120.356586] amplc_dio200_common_attach:
+[61120.356594] dio200_subdev_8255_init: offset [0000]
+[61120.356599] dio200_subdev_8255_set_dir: subpriv->ofs [00000000] I8255_CTRL_REG [00000003] config [0000009b]
+[61120.356605] dio200_write8: -> writeb val [9b] address [00548018] offset [00000018]
+[61120.356607] dio200_subdev_8255_init: offset [0008]
+[61120.356612] dio200_subdev_8255_set_dir: subpriv->ofs [00000008] I8255_CTRL_REG [00000003] config [0000009b]
+[61120.356616] dio200_write8: -> writeb val [9b] address [00548058] offset [00000058]
+[61120.356619] dio200_subdev_8254_init: offset [0010]
+[61120.356624] __i8254_init: iobase [00000000], iosize [0001] regshift [0003]
+[61120.356629] __i8254_write: -> outb val [30] reg [00000003]
+[61120.356634] __i8254_write: -> writeb val [30] address [ffffc90000548098] reg_offset [00000018]
+[61120.356637] __i8254_write: -> outb val [70] reg [00000003]
+[61120.356641] __i8254_write: -> writeb val [70] address [ffffc90000548098] reg_offset [00000018]
+[61120.356644] __i8254_write: -> outb val [b0] reg [00000003]
+[61120.356648] __i8254_write: -> writeb val [b0] address [ffffc90000548098] reg_offset [00000018]
+[61120.356652] comedi_8254_subdevice_init:
+[61120.356655] dio200_subdev_8254_set_gate_src: chan [00000000] src [00000000]
+[61120.356660] dio200_write8: -> writeb val [ 0] address [005480e8] offset [000000e8]
+[61120.356662] dio200_subdev_8254_set_clock_src: chan [00000000] src [00000000]
+[61120.356666] dio200_write8: -> writeb val [ 0] address [005480d0] offset [000000d0]
+[61120.356670] dio200_subdev_8254_set_gate_src: chan [00000001] src [00000000]
+[61120.356674] dio200_write8: -> writeb val [ 8] address [005480e8] offset [000000e8]
+[61120.356678] dio200_subdev_8254_set_clock_src: chan [00000001] src [00000000]
+[61120.356683] dio200_write8: -> writeb val [ 8] address [005480d0] offset [000000d0]
+[61120.356686] dio200_subdev_8254_set_gate_src: chan [00000002] src [00000000]
+[61120.356689] dio200_write8: -> writeb val [10] address [005480e8] offset [000000e8]
+[61120.356692] dio200_subdev_8254_set_clock_src: chan [00000002] src [00000000]
+[61120.356697] dio200_write8: -> writeb val [10] address [005480d0] offset [000000d0]
+[61120.356699] dio200_subdev_8254_init: offset [0014]
+[61120.356704] __i8254_init: iobase [00000000], iosize [0001] regshift [0003]
+[61120.356707] __i8254_write: -> outb val [30] reg [00000003]
+[61120.356712] __i8254_write: -> writeb val [30] address [ffffc900005480b8] reg_offset [00000018]
+[61120.356715] __i8254_write: -> outb val [70] reg [00000003]
+[61120.356720] __i8254_write: -> writeb val [70] address [ffffc900005480b8] reg_offset [00000018]
+[61120.356722] __i8254_write: -> outb val [b0] reg [00000003]
+[61120.356726] __i8254_write: -> writeb val [b0] address [ffffc900005480b8] reg_offset [00000018]
+[61120.356728] comedi_8254_subdevice_init:
+[61120.356732] dio200_subdev_8254_set_gate_src: chan [00000000] src [00000000]
+[61120.356735] dio200_write8: -> writeb val [20] address [005480e8] offset [000000e8]
+[61120.356739] dio200_subdev_8254_set_clock_src: chan [00000000] src [00000000]
+[61120.356743] dio200_write8: -> writeb val [20] address [005480d0] offset [000000d0]
+[61120.356746] dio200_subdev_8254_set_gate_src: chan [00000001] src [00000000]
+[61120.356749] dio200_write8: -> writeb val [28] address [005480e8] offset [000000e8]
+[61120.356754] dio200_subdev_8254_set_clock_src: chan [00000001] src [00000000]
+[61120.356756] dio200_write8: -> writeb val [28] address [005480d0] offset [000000d0]
+[61120.356761] dio200_subdev_8254_set_gate_src: chan [00000002] src [00000000]
+[61120.356764] dio200_write8: -> writeb val [30] address [005480e8] offset [000000e8]
+[61120.356769] dio200_subdev_8254_set_clock_src: chan [00000002] src [00000000]
+[61120.356772] dio200_write8: -> writeb val [30] address [005480d0] offset [000000d0]
+[61120.356775] amplc_dio200_common_attach: offset [sd_timer]
+[61120.356777] dio200_subdev_intr_init: offset [001e]
+[61120.356782] dio200_write8: -> writeb val [ 0] address [005480f0] offset [000000f0]
+[61120.368252] comedi comedi0: driver 'amplc_dio200_pci' has successfully auto-configured 'pcie215'.
+[61809.865548] pcihsd: Using compat ioctl interface
+[61809.865557] pcihsd: Using unlocked ioctl interface
+[61809.865946] init_pcihsd_device: Attached [PCIHSD2] [pcihsd0], serial # [13390], revision [B]  (using PLX PCI9080)
+[61809.865957] pcihsd: irqline [5]
+[61809.865963] pcihsd: irqpin [1]
+[61809.866031] pcihsd: OK, module loaded
+[61821.020790] _logsts 1: [pcihsd_ioctl] [1140] [13] [0] [0]
+[61821.020804] _logsts 1: [pcihsd_ioctl] [1140] [13] [0] [0]
+[61821.020840] dio200_write8: -> writeb val [ 1] address [005480f0] offset [000000f0]
+[61821.048362] dio200_write8: -> writeb val [ 0] address [005480f0] offset [000000f0]
+[61821.048373] dio200_write8: -> writeb val [ 1] address [005480f0] offset [000000f0]
+[61821.081138] dio200_write8: -> writeb val [ 0] address [005480f0] offset [000000f0]
+[61821.081148] dio200_write8: -> writeb val [ 1] address [005480f0] offset [000000f0]
+

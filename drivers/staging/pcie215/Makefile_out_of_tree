@@ -1,0 +1,17 @@
+obj-$(CONFIG_PCIE215)	:=	pcie215.o
+
+CFLAGS_pcie215.o = -I$(src)
+
+all: kernel_modules
+
+%.ko:	%.o
+	@echo "Building RELEASE version..."
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) $@
+
+kernel_modules:
+	@echo "Building kernel_modules..."
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+	rm -f pcie215.ko
+	rm -f pcie215.o

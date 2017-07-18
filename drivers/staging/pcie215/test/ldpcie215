@@ -1,0 +1,27 @@
+#!/bin/sh
+
+module="pcie215"
+uname -r | grep -q "^2\.6" >/dev/null && module="pcihsd.ko"
+device="pcie215"
+
+
+# invoke insmod
+echo /sbin/insmod $module.ko
+/sbin/insmod $module.ko
+
+# remove old nodes
+rm -f /dev/${device}*
+
+# get major number vy
+major=`cat /proc/devices | awk "\\\$2==\"$device\" {print \\$1}"`
+if [ -z "$major" ]
+then
+    echo "$module failed to load;  no /dev nodes created."
+    exit 1
+fi
+
+
+# generate node for pcie215 with minor 0
+echo /bin/mknod /dev/pcie215 c $major 0
+/bin/mknod /dev/pcie215 c $major 0
+chmod a+rw /dev/pcie215

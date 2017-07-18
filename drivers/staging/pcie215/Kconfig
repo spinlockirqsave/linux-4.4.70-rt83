@@ -1,0 +1,11 @@
+config PCIE215
+	tristate "PCIe215 Driver for interrupt signal of Amplicon's PCIe215"
+	depends on PCI
+	default n
+	---help---
+	This option adds the driver for interrupt signal received from Amplicon's PCIe215 digital I/O board.
+	User space application can wait for interrupt signal being asserted on pins of PCIe215. To do so
+	application should call read() on the device file exposed by this driver. This results in application
+	being put to sleep if no interrupt is active and application being woken up when the driver receives
+	interrupt from the PCIe215 board.
+

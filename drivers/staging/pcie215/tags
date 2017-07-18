@@ -1,0 +1,137 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CC	test/Makefile	/^CC = gcc$/;"	m
+CFLAGS	test/Makefile	/^CFLAGS	=$/;"	m
+CFLAGS_DEBUG	test/Makefile	/^CFLAGS_DEBUG = -c -g3 -O0 -DDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror$/;"	m
+CFLAGS_RELEASE	test/Makefile	/^CFLAGS_RELEASE = -c -o3 -DNDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror$/;"	m
+CFLAGS_pcie215.o	Makefile	/^CFLAGS_pcie215.o = -I$(src)$/;"	m
+CREATE_TRACE_POINTS	pcie215.c	45;"	d	file:
+INCLUDES	test/Makefile	/^INCLUDES = -I.$/;"	m
+LDFLAGS	test/Makefile	/^LDFLAGS = #-lpcap$/;"	m
+LDFLAGS_D	test/Makefile	/^LDFLAGS_D = -g #-lpcap$/;"	m
+LDLIBS	test/Makefile	/^LDLIBS := -pthread$/;"	m
+PCIE215	pcie215.c	55;"	d	file:
+PCIE215	test/pcie215_ioctl.c	21;"	d	file:
+PCIE215	test/pcie215_read.c	21;"	d	file:
+PCIE215	test/pcie215_write.c	21;"	d	file:
+PCIE215_8254_CTRL_BCD_16_BIT	pcie215.c	132;"	d	file:
+PCIE215_8254_CTRL_BCD_BCD	pcie215.c	133;"	d	file:
+PCIE215_8254_CTRL_COUNTER_SELECT	pcie215.c	126;"	d	file:
+PCIE215_8254_CTRL_MODE_0	pcie215.c	125;"	d	file:
+PCIE215_8254_CTRL_RW	pcie215.c	127;"	d	file:
+PCIE215_8254_CTRL_RW_LATCH	pcie215.c	128;"	d	file:
+PCIE215_8254_CTRL_RW_LSB_MSB	pcie215.c	131;"	d	file:
+PCIE215_8254_CTRL_RW_LSB_ONLY	pcie215.c	129;"	d	file:
+PCIE215_8254_CTRL_RW_MSB_ONLY	pcie215.c	130;"	d	file:
+PCIE215_8254_CTRL_Z1_0	pcie215.c	117;"	d	file:
+PCIE215_8254_CTRL_Z1_1	pcie215.c	118;"	d	file:
+PCIE215_8254_CTRL_Z1_2	pcie215.c	119;"	d	file:
+PCIE215_8254_CTRL_Z1_CTRL	pcie215.c	120;"	d	file:
+PCIE215_8254_CTRL_Z2_0	pcie215.c	121;"	d	file:
+PCIE215_8254_CTRL_Z2_1	pcie215.c	122;"	d	file:
+PCIE215_8254_CTRL_Z2_2	pcie215.c	123;"	d	file:
+PCIE215_8254_CTRL_Z2_CTRL	pcie215.c	124;"	d	file:
+PCIE215_8255_CTRL_CW_FLAG	pcie215.c	106;"	d	file:
+PCIE215_8255_CTRL_PORTA_IO	pcie215.c	104;"	d	file:
+PCIE215_8255_CTRL_PORTA_MODE	pcie215.c	105;"	d	file:
+PCIE215_8255_CTRL_PORTB_IO	pcie215.c	101;"	d	file:
+PCIE215_8255_CTRL_PORTB_MODE	pcie215.c	102;"	d	file:
+PCIE215_8255_CTRL_PORTC_HI_IO	pcie215.c	103;"	d	file:
+PCIE215_8255_CTRL_PORTC_LO_IO	pcie215.c	100;"	d	file:
+PCIE215_DRV_AUTHOR	pcie215.c	/^MODULE_AUTHOR(PCIE215_DRV_AUTHOR);$/;"	v
+PCIE215_DRV_AUTHOR	pcie215.c	52;"	d	file:
+PCIE215_DRV_DESC	pcie215.c	/^MODULE_DESCRIPTION(PCIE215_DRV_DESC);$/;"	v
+PCIE215_DRV_DESC	pcie215.c	53;"	d	file:
+PCIE215_DRV_VERSION	pcie215.c	/^MODULE_VERSION(PCIE215_DRV_VERSION);$/;"	v
+PCIE215_DRV_VERSION	pcie215.c	51;"	d	file:
+PCIE215_EFE	pcie215.c	85;"	d	file:
+PCIE215_FLAGS_IRQ	pcie215.c	137;"	d	file:
+PCIE215_IER	pcie215.c	83;"	d	file:
+PCIE215_IOCTL_H	pcie215_ioctl.h	2;"	d
+PCIE215_IOCTL_IRQ_ENABLE	pcie215_ioctl.h	16;"	d
+PCIE215_IOCTL_IRQ_TRIGGERS_DISABLE	pcie215_ioctl.h	21;"	d
+PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE	pcie215_ioctl.h	19;"	d
+PCIE215_IOCTL_MAGIC	pcie215_ioctl.h	13;"	d
+PCIE215_IRQ_SRC_CTRZ1_OUT1_OP	pcie215.c	113;"	d	file:
+PCIE215_IRQ_SRC_CTRZ2_OUT1_OP	pcie215.c	114;"	d	file:
+PCIE215_IRQ_SRC_MASK	pcie215.c	91;"	d	file:
+PCIE215_IRQ_SRC_N	pcie215.c	90;"	d	file:
+PCIE215_IRQ_SRC_PPI_X_C0	pcie215.c	109;"	d	file:
+PCIE215_IRQ_SRC_PPI_X_C3	pcie215.c	110;"	d	file:
+PCIE215_IRQ_SRC_PPI_Y_C0	pcie215.c	111;"	d	file:
+PCIE215_IRQ_SRC_PPI_Y_C3	pcie215.c	112;"	d	file:
+PCIE215_LLIER	pcie215.c	87;"	d	file:
+PCIE215_PCIE_IO_SIZE	pcie215.c	71;"	d	file:
+PCIE215_PORT_A_PPI_X	pcie215.c	73;"	d	file:
+PCIE215_PORT_A_PPI_Y	pcie215.c	78;"	d	file:
+PCIE215_PORT_B_PPI_X	pcie215.c	74;"	d	file:
+PCIE215_PORT_B_PPI_Y	pcie215.c	79;"	d	file:
+PCIE215_PORT_CTRL_PPI_X	pcie215.c	76;"	d	file:
+PCIE215_PORT_CTRL_PPI_Y	pcie215.c	81;"	d	file:
+PCIE215_PORT_C_PPI_X	pcie215.c	75;"	d	file:
+PCIE215_PORT_C_PPI_Y	pcie215.c	80;"	d	file:
+PCIE215_VERSION	pcie215.c	86;"	d	file:
+PCI_DEVICE_ID_AMPLICON_PCIE215	pcie215.c	56;"	d	file:
+TRACE_INCLUDE_FILE	pcie215-trace.h	49;"	d
+TRACE_INCLUDE_PATH	pcie215-trace.h	47;"	d
+TRACE_INCLUDE_PATH	pcie215-trace.h	48;"	d
+TRACE_SYSTEM	pcie215-trace.h	1;"	d
+TRACE_SYSTEM	pcie215-trace.h	2;"	d
+_TRACE_PCIE215_H	pcie215-trace.h	5;"	d
+__this_module	pcie215.mod.c	/^__visible struct module __this_module$/;"	v	typeref:struct:module
+__used	pcie215.mod.c	/^__used$/;"	v	file:
+__used	pcie215.mod.c	/^__used$/;"	v	typeref:struct:____versions	file:
+ba	pcie215.c	/^	unsigned long	ba;			\/* Base Address, main register space *\/$/;"	m	struct:pcie215	file:
+ba_iomem	pcie215.c	/^	void __iomem	*ba_iomem;		\/* I\/O remapped memory *\/$/;"	m	struct:pcie215	file:
+flags	pcie215.c	/^	unsigned long		flags;$/;"	m	struct:pcie215	file:
+irq	pcie215.c	/^	long			irq;$/;"	m	struct:pcie215	file:
+irq_flags	pcie215.c	/^	unsigned long	irq_flags;$/;"	m	struct:pcie215	file:
+irq_missed_n	pcie215.c	/^	unsigned long long irq_missed_n;$/;"	m	struct:pcie215	file:
+irq_n	pcie215.c	/^	unsigned long long irq_n;$/;"	m	struct:pcie215	file:
+irq_spurious_n	pcie215.c	/^	unsigned long long irq_spurious_n;$/;"	m	struct:pcie215	file:
+lcr	pcie215.c	/^	unsigned long	lcr;			\/* Local Bus configuration register space *\/$/;"	m	struct:pcie215	file:
+lcr_iomem	pcie215.c	/^	void __iomem	*lcr_iomem;		\/* I\/O remapped memory *\/$/;"	m	struct:pcie215	file:
+lock	pcie215.c	/^	spinlock_t		lock;$/;"	m	struct:pcie215	file:
+main	test/pcie215_ioctl.c	/^int main(int argc, char *argv[])$/;"	f
+main	test/pcie215_read.c	/^int main(int argc, char *argv[])$/;"	f
+main	test/pcie215_write.c	/^int main(int argc, char *argv[])$/;"	f
+major	pcie215.c	/^	unsigned int	major;$/;"	m	struct:pcie215	file:
+pcie215	pcie215.c	/^struct pcie215 {$/;"	s	file:
+pcie215_device	pcie215.c	/^struct pcie215 pcie215_device;$/;"	v	typeref:struct:pcie215
+pcie215_driver	pcie215.c	/^module_pci_driver(pcie215_driver);$/;"	v
+pcie215_driver	pcie215.c	/^static struct pci_driver pcie215_driver = {$/;"	v	typeref:struct:pci_driver	file:
+pcie215_fops	pcie215.c	/^static const struct file_operations pcie215_fops =  {$/;"	v	typeref:struct:file_operations	file:
+pcie215_fops_compat_ioctl	pcie215.c	/^static long pcie215_fops_compat_ioctl(struct file *filp, unsigned int cmd,$/;"	f	file:
+pcie215_fops_open	pcie215.c	/^static int pcie215_fops_open(struct inode *inode, struct file *filp)$/;"	f	file:
+pcie215_fops_read	pcie215.c	/^static ssize_t pcie215_fops_read(struct file *filp, char __user *buf,$/;"	f	file:
+pcie215_fops_release	pcie215.c	/^static int pcie215_fops_release(struct inode *inode, struct file *filp)$/;"	f	file:
+pcie215_fops_unlocked_ioctl	pcie215.c	/^static long pcie215_fops_unlocked_ioctl(struct file *filp, unsigned int cmd,$/;"	f	file:
+pcie215_init_8254	pcie215.c	/^static int pcie215_init_8254(struct pcie215 *pcie215dev)$/;"	f	file:
+pcie215_init_8255	pcie215.c	/^static int pcie215_init_8255(struct pcie215 *pcie215dev)$/;"	f	file:
+pcie215_ioread32	pcie215.c	/^static __u32 pcie215_ioread32(struct pcie215 *pcie215dev,$/;"	f	file:
+pcie215_ioread8	pcie215.c	/^static __u8 pcie215_ioread8(struct pcie215 *pcie215dev,$/;"	f	file:
+pcie215_iowrite32	pcie215.c	/^static void pcie215_iowrite32(struct pcie215 *pcie215dev, __u32 val,$/;"	f	file:
+pcie215_iowrite8	pcie215.c	/^static void pcie215_iowrite8(struct pcie215 *pcie215dev, __u8 val,$/;"	f	file:
+pcie215_irq_disable	pcie215.c	/^static void pcie215_irq_disable(struct pcie215 *pcie215dev)$/;"	f	file:
+pcie215_irq_enable	pcie215.c	/^static void pcie215_irq_enable(struct pcie215 *pcie215dev)$/;"	f	file:
+pcie215_irq_triggers_disable	pcie215.c	/^static void pcie215_irq_triggers_disable(struct pcie215 *pcie215dev,$/;"	f	file:
+pcie215_irq_triggers_enable	pcie215.c	/^static void pcie215_irq_triggers_enable(struct pcie215 *pcie215dev,$/;"	f	file:
+pcie215_isr	pcie215.c	/^static irqreturn_t pcie215_isr(int irq, void *dev_id)$/;"	f	file:
+pcie215_misc_dev_t	pcie215.c	/^static struct miscdevice pcie215_misc_dev_t = {$/;"	v	typeref:struct:miscdevice	file:
+pcie215_probe	pcie215.c	/^static int pcie215_probe(struct pci_dev *pdev, const struct pci_device_id *id)$/;"	f	file:
+pcie215_remove	pcie215.c	/^static void pcie215_remove(struct pci_dev *pdev)$/;"	f	file:
+pcie215_resume	pcie215.c	/^static int pcie215_resume(struct pci_dev *pdev)$/;"	f	file:
+pcie215_supported_devices	pcie215.c	/^static const struct pci_device_id pcie215_supported_devices [] = {$/;"	v	typeref:struct:pci_device_id	file:
+pcie215_suspend	pcie215.c	/^static int pcie215_suspend(struct pci_dev *pdev, pm_message_t state)$/;"	f	file:
+pdev	pcie215.c	/^	struct pci_dev	*pdev;$/;"	m	struct:pcie215	typeref:struct:pcie215::pci_dev	file:
+ppi_8255_config	pcie215.c	/^	__u8		ppi_8255_config;$/;"	m	struct:pcie215	file:
+triggers	pcie215.c	/^	__u8			triggers;$/;"	m	struct:pcie215	file:
+triggers	pcie215.c	/^static unsigned long triggers;$/;"	v	file:
+usage	test/pcie215_ioctl.c	/^void usage(char *name)$/;"	f
+usage	test/pcie215_read.c	/^void usage(char *name)$/;"	f
+usage	test/pcie215_write.c	/^void usage(char *name)$/;"	f
+wait_queue	pcie215.c	/^	wait_queue_head_t	wait_queue;	\/* List of the blocked processes awaiting for external interrupt *\/$/;"	m	struct:pcie215	file:
