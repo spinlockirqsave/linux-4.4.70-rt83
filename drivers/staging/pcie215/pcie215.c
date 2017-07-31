@@ -1,28 +1,37 @@
 /*
  * This is a driver for Amplicon's PCIe215 signal processing
- * controller. At this moment it's only feature is to enable
- * user space process to react to the external signals.
+ * controller. It enables user space process to react
+ * to the external signals asserted on interrupt pins
+ * of Amplicon's PCIe215 board.
  *
  * The simplest use case is:
  *
  *	1. Application opens driver
+ *
  *		fd = open(PCIE215, O_RDWR);
  *
- *	2. And specifies enabled IRQ triggers
+ *	2. And specifies pins allowed to trigger IRQ
+ *
  *		ioctl(fd, PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE, triggers);
  *
  *	3. Enables interrupt generation by PCIe215's Altera Cyclone IV fpga
+ *
  *		ioctl(fd, PCIE215_IOCTL_IRQ_ENABLE, 1);
  *
  *	4. Application executes read() call and is blocked in that call
  *	waiting for external signal being asserted on one of configured
- *	triggers (likely in loop)
- *		read(fd, NULL, 0);
+ *	(in step 2) triggers (likely in a loop)
  *
- *	5. When signal on any of the pins of interest has been asserted,
+ *		ret = read(fd, NULL, 0);
+ *
+ *	5. When signal on any of the enabled pins has been asserted,
  *	CPU is interrupted and driver wakes up the user space process.
  *	Sleep is interruptible so signal queued for the process will
- *	wake up the process too.
+ *	wake up the process too. Process can understand the reason
+ *	it has been awoken by the value returned from the read() call:
+ *		it is 0 if the wake up is due to signal asserted
+ *		and -1 in other cases, errno is set to IEINTR
+ *		if the wake up is due to signal delivered to the process.
  */
 
 
@@ -67,7 +76,9 @@
  * by a bit in an interrupt mask register.
  */
 
-/* PCIe215 registers (expressed as offset from base memory address) */
+/*
+ * PCIe215 registers (expressed as offset from base memory address)
+ */
 #define PCIE215_PCIE_IO_SIZE	0x4000
 								/* direction	| size in bits	| description */
 #define PCIE215_PORT_A_PPI_X	0x00				/* In/Out	| 8	| data to/from port A of PPI X */
@@ -86,7 +97,9 @@
 #define PCIE215_VERSION	0x120					/* In		| 8	| Hardware Version register */
 #define PCIE215_LLIER	0x50					/* In/Out	| 32	| Low-level Interrupt Enable Register, accessed from LCR */
 
-/* IRQ sources (triggers of interrupts) */
+/*
+ * IRQ sources (triggers of interrupts)
+ */
 #define PCIE215_IRQ_SRC_N	(6)
 #define PCIE215_IRQ_SRC_MASK	(0x3f)				/* bitmask of valid IRQ triggers */
 
@@ -105,7 +118,9 @@
 #define PCIE215_8255_CTRL_PORTA_MODE(x)	((x & 0x3) << 5)/* D5 and D6 */
 #define PCIE215_8255_CTRL_CW_FLAG	BIT(7)		/* D7 */
 
-/* IRQ triggers */
+/*
+ * IRQ triggers
+ */
 #define PCIE215_IRQ_SRC_PPI_X_C0	BIT(0)		/* for external signals,pin 44, INTRB */
 #define PCIE215_IRQ_SRC_PPI_X_C3	BIT(1)		/* for external signals,pin 24, INTRA */
 #define PCIE215_IRQ_SRC_PPI_Y_C0	BIT(2)		/* for external signals,pin 70, INTRB */
@@ -113,7 +128,9 @@
 #define PCIE215_IRQ_SRC_CTRZ1_OUT1_OP	BIT(4)		/* for onboard timers,	pin 55 */
 #define PCIE215_IRQ_SRC_CTRZ2_OUT1_OP	BIT(5)		/* for onboard timers,	pin 58 */
 
-/* 8254 Timer/Counter registers */
+/*
+ * 8254 Timer/Counter registers
+ */
 #define PCIE215_8254_CTRL_Z1_0			0x80
 #define PCIE215_8254_CTRL_Z1_1			0x88
 #define PCIE215_8254_CTRL_Z1_2			0x90
@@ -133,7 +150,9 @@
 #define PCIE215_8254_CTRL_BCD_BCD		1
 
 
-/* Bit flags */
+/*
+ * Bit flags
+ */
 #define	PCIE215_FLAGS_IRQ			1			/* 1 if IRQ has been triggered on one of the pins the TASK is waitnig for, 0 otherwise */
 
 /*
@@ -143,7 +162,7 @@
  */
 static unsigned long triggers;
 module_param(triggers, ulong, S_IRUGO);
-MODULE_PARM_DESC(triggers, "This parameter may be passed to insmod "
+MODULE_PARM_DESC(triggers, "This bit mask may be passed to insmod "
 		 "and/or modprobe to set enabled IRQ triggers at "
 		 "module load time (interruption triggering is "
 		 "also started in that case). Value to trigger|pin "
@@ -155,9 +174,9 @@ MODULE_PARM_DESC(triggers, "This parameter may be passed to insmod "
 
 struct pcie215 {
 	struct pci_dev	*pdev;
-	spinlock_t		lock;
+	spinlock_t	lock;			/* synchronizes access to driver's data between ISR and ioctl */
 	unsigned int	major;
-	long			irq;
+	long		irq;			/* assigned IRQ vector number */
 	unsigned long	irq_flags;
 	unsigned long long irq_n;
 	unsigned long long irq_spurious_n;
@@ -169,18 +188,25 @@ struct pcie215 {
 	wait_queue_head_t	wait_queue;	/* List of the blocked processes awaiting for external interrupt */
 	unsigned long		flags;
 	__u8			triggers;
-	__u8		ppi_8255_config;
+	u8	ppi_8255_config;
 };
 
 struct pcie215 pcie215_device;
 
-/*
- * @brief	Read device memory.
- * @param	ba = 1 when reading with offset from Base Address,
- *		ba = 0 when reading with offset from Local Bus
+/**
+ *	pcie215_ioread8 - read device memory of size 8 bits.
+ *	@ba:		Switch between Base Address and Local Address
+ *			Configuration registers.
+ *	@offset:	Offset to chosen register space.
+ *
+ *	If @ba is set to 1 then reading is performed at @offset
+ *	from the Base Address, if ba is set to 0 then reading
+ *	is at @offset from Local Bus.
+ *
+ *	Return: The value read.
  */
-static __u8 pcie215_ioread8(struct pcie215 *pcie215dev,
-			  __u32 offset, __u8 ba)
+static u8 pcie215_ioread8(struct pcie215 *pcie215dev,
+			  u32 offset, u8 ba)
 {
 	if (ba) {
 		if (pcie215dev->ba_iomem)
@@ -195,13 +221,18 @@ static __u8 pcie215_ioread8(struct pcie215 *pcie215dev,
 	}
 }
 
-/*
- * @brief	Write device memory.
- * @param	ba = 1 when writing with offset from Base Address,
- *		ba = 0 when writing with offset from Local Bus
+/**
+ *	pcie215_iowrite8 - write device memory of size 8 bits.
+ *	@ba:		Switch between Base Address and Local Address
+ *			Configuration registers.
+ *	@offset:	Offset to chosen register space.
+ *
+ *	If @ba is set to 1 then write is performed at @offset
+ *	from the Base Address, if ba is set to 0 then write
+ *	is at @offset from Local Bus.
  */
-static void pcie215_iowrite8(struct pcie215 *pcie215dev, __u8 val,
-			     __u32 offset, __u8 ba)
+static void pcie215_iowrite8(struct pcie215 *pcie215dev, u8 val,
+			     u32 offset, u8 ba)
 {
 	if (ba) {
 		if (pcie215dev->ba_iomem)
@@ -217,36 +248,18 @@ static void pcie215_iowrite8(struct pcie215 *pcie215dev, __u8 val,
 }
 
 
-static __u32 pcie215_ioread32(struct pcie215 *pcie215dev,
-			    __u32 offset, __u8 ba) __attribute__ ((unused));
-/*
- * @brief	Read device memory.
- * @param	ba = 1 when reading with offset from Base Address,
- *		ba = 0 when reading with offset from Local Bus
+/**
+ *	pcie215_iowrite32 - write device memory of size 32 bits.
+ *	@ba:		Switch between Base Address and Local Address
+ *			Configuration registers.
+ *	@offset:	Offset to chosen register space.
+ *
+ *	If @ba is set to 1 then write is performed at @offset
+ *	from the Base Address, if ba is set to 0 then write
+ *	is at @offset from Local Bus.
  */
-static __u32 pcie215_ioread32(struct pcie215 *pcie215dev,
-			    __u32 offset, __u8 ba)
-{
-	if (ba) {
-		if (pcie215dev->ba_iomem)
-			return ioread32(pcie215dev->ba_iomem + offset);
-		else
-			return inl(pcie215dev->ba + offset);
-	} else {
-		if (pcie215dev->lcr_iomem)
-			return ioread32(pcie215dev->lcr_iomem + offset);
-		else
-			return inl(pcie215dev->lcr + offset);
-	}
-}
-
-/*
- * @brief	Write device memory.
- * @param	ba = 1 when writing with offset from Base Address,
- *		ba = 0 when writing with offset from Local Bus
- */
-static void pcie215_iowrite32(struct pcie215 *pcie215dev, __u32 val,
-			      __u32 offset, __u8 ba)
+static void pcie215_iowrite32(struct pcie215 *pcie215dev, u32 val,
+			     u32 offset, u8 ba)
 {
 	if (ba) {
 		if (pcie215dev->ba_iomem)
@@ -261,16 +274,18 @@ static void pcie215_iowrite32(struct pcie215 *pcie215dev, __u32 val,
 	}
 }
 
-/*
- * @brief	Initialise 82c54 CMOS Programmable Interval Timer/Counter.
- * @details	After power-up, the state of the 82c54 is undefined. The mode,
- *		count value and output of all counters are undefined. Each
- *		counter must be programmed before it is used. Unused counters
- *		need not be programmed.
+/**
+ *	pcie215_init_8254 - Initialise 82c54 CMOS Programmable
+ *				Interval Timer/Counter.
+ *
+ *	After power-up, the state of the 82c54 is undefined. The mode,
+ *	count value and output of all counters are undefined. Each counter
+ *	must be programmed before it is used. Unused counters need not
+ *	to be programmed.
  */
-static int pcie215_init_8254(struct pcie215 *pcie215dev)
+static void pcie215_init_8254(struct pcie215 *pcie215dev)
 {
-	__u8	mode = 0;
+	u8	mode = 0;
 
 	int i = 0;
 
@@ -285,30 +300,30 @@ static int pcie215_init_8254(struct pcie215 *pcie215dev)
 		pcie215_iowrite8(pcie215dev, mode,
 				 PCIE215_8254_CTRL_Z2_CTRL, 1);
 	}
-
-	return 0;
 }
 
-/*
- * @brief	Initialise 82c55a CMOS Programmable Peripheral Interface.
- * @details	Initialise 8255 to Mode 0 for both PORT A and PORT B.
- *		Mode 0 is Basic Input/Output mode. No handshaking is equired,
- *		data is simply written to or read from a specific port.
- *		Mode 0:
- *			- Two 8-bit (A,B) and two 4-bit (C) ports for each PPI
- *			(i.e. 4 8-bit ports in total and 4 4-bits ports in
- *			total)
- *			- Each of them can be individually programmed as
- *			Input/Output
+/**
+ *	pcie215_init_8255 - Initialise 82c55a CMOS Programmable
+ *				Peripheral Interface.
+ *
+ *	Initialise 8255 to Mode 0 for both PORT A and PORT B.
+ *	Mode 0 is Basic Input/Output mode. No handshaking is required,
+ *	data is simply written to or read from a specific port.
+ *	Mode 0:
+ *		- Two 8-bit (A,B) and two 4-bit (C) ports for each PPI
+ *		(i.e. 4 8-bit ports in total and 4 4-bits ports in total)
+ *		- Each of them can be individually programmed as Input/Output
  *			- Outputs are latched
  *			- Inputs are NOT latched
- *		This is also a default mode of PCIe215 after reset.
+ *	This is also a default mode of PCIe215 after reset.
  */
-static int pcie215_init_8255(struct pcie215 *pcie215dev)
+static void pcie215_init_8255(struct pcie215 *pcie215dev)
 {
-	/* Configure PORT A and PORT B as inputs in MODE 0 (IRQ)
-	 * (control word 0x9B) */
-	__u8	config = (PCIE215_8255_CTRL_CW_FLAG |
+	/*
+	 * Configure PORT A and PORT B as inputs in MODE 0 (IRQ)
+	 * (control word 0x9B)
+	 */
+	u8	config = (PCIE215_8255_CTRL_CW_FLAG |
 			  PCIE215_8255_CTRL_PORTA_MODE(0) |
 			  PCIE215_8255_CTRL_PORTA_IO |
 			  PCIE215_8255_CTRL_PORTC_HI_IO |
@@ -319,31 +334,40 @@ static int pcie215_init_8255(struct pcie215 *pcie215dev)
 	pcie215_iowrite8(pcie215dev, config, PCIE215_PORT_CTRL_PPI_X, 1);
 	pcie215_iowrite8(pcie215dev, config, PCIE215_PORT_CTRL_PPI_Y, 1);
 	pcie215dev->ppi_8255_config = config;
-
-	return 0;
 }
 
-/*
- * @brief	Enable PCIe interrupts generation by Altera Cyclone IV fpga of PCIe215.
- * @details	Lock must be taken.
+/**
+ *	pcie215_irq_enable - Enable PCIe interrupts generation.
+ *
+ *	Enables generation of PCIe interrupts by Altera Cyclone IV fpga
+ *	of PCIe215.
+ *
+ *	Lock must be taken.
  */
 static void pcie215_irq_enable(struct pcie215 *pcie215dev)
 {
 	pcie215_iowrite32(pcie215dev, 0x80, PCIE215_LLIER, 0);
 }
 
-/*
- * @brief	Disable PCIe interrupts generation by Altera Cyclone IV fpga of PCIe215.
- * @details	Lock must be taken.
+/**
+ *	pcie215_irq_disable - Disable PCIe interrupts generation.
+ *
+ *	Disables generation of the interrupts by Altera Cyclone IV fpga
+ *	of PCIe215.
+ *
+ *	Lock must be taken.
  */
 static void pcie215_irq_disable(struct pcie215 *pcie215dev)
 {
 	pcie215_iowrite32(pcie215dev, 0x00, PCIE215_LLIER, 0);
 }
 
-/*
- * @brief	Set enabled IRQ triggers in interrupt Enable/Status register.
- * @details	Lock must be taken.
+/**
+ *	pcie215_irq_triggers_enable - Enables pins to trigger IRQ.
+ *	@enabled:	Mask of pins allowed to trigger interrupt.
+ *			This gets written to interrupt Enable/Status register.
+ *
+ *	Lock must be taken.
  */
 static void pcie215_irq_triggers_enable(struct pcie215 *pcie215dev,
 					__u8 enabled)
@@ -351,30 +375,24 @@ static void pcie215_irq_triggers_enable(struct pcie215 *pcie215dev,
 	pcie215_iowrite8(pcie215dev, enabled, PCIE215_IER, 1);
 }
 
-static void pcie215_irq_triggers_disable(struct pcie215 *pcie215dev,
-					__u8 disabled) __attribute__ ((unused));
-
-/*
- * @brief	Clear allowed IRQ triggers in interrupt enable/status register.
- * @details	Lock must be taken.
- *		This method is designed to be called when it is not known
- *		which IRQ triggers are currently enabled. This method will
- *		therefore read the IRQ Status/Enable register. If the enabled
- *		IRQ triggers are known it is better to call
- *		pcie215_irq_triggers_enable instead with mask updated.
+/**
+ *	pcie215_isr - Interrupt Service Routine.
+ *
+ *	ISR checks for spuroius IRQ by reading the Interrupt Status/Enable
+ *	register. It exits if none of the configured pins is in state HIGH.
+ *	It pulls LOW asserted pins by writing 0 to corresponding bit in IER
+ *	in loop, until all pins are LOW. Finally, it enables interrupt
+ *	triggering on all configured pins and wakes up all processes blocked
+ *	in a read() call to this driver.
+ *
+ *	Return : IRQ_NONE if none of the configured pins is asserted,
+ *	IRQ_HANDLED otherwise.
  */
-static void pcie215_irq_triggers_disable(struct pcie215 *pcie215dev,
-					__u8 disabled)
-{
-	__u8	enabled = pcie215dev->triggers;
-	enabled &= ~disabled;
-	pcie215_iowrite8(pcie215dev, enabled, PCIE215_IER, 1);
-}
-
 static irqreturn_t pcie215_isr(int irq, void *dev_id)
 {
 	unsigned long	flags;
-	__u8	irq_status, triggered = 0, enabled = 0;
+	u8		irq_status, triggered = 0;
+	__u8		enabled;
 	struct pcie215 *pcie215dev = (struct pcie215 *) dev_id;
 
 	trace_pcie215_isr(0, pcie215dev->irq_n, pcie215dev->irq_spurious_n);
@@ -414,11 +432,11 @@ static irqreturn_t pcie215_isr(int irq, void *dev_id)
 			pcie215dev->irq_spurious_n);
 
 	/*
-	 * Some of configured IRQ sources have been marked active.
-	 * Collect active and configured sources - neglecting spurious ones.
+	 * Some of the configured IRQ pins have triggered.
+	 * Collect configured pins which have been asserted.
 	 *
-	 * Read IRQ status (sources which have triggered) until
-	 * all interrupt sources have been cleared in IRQ Enable/Status register.
+	 * Read IRQ status until all interrupt pins have been
+	 * cleared in IRQ Enable/Status register.
 	 * Disable already seen triggers from @enabled mask.
 	 */
 	triggered = irq_status;
@@ -466,18 +484,69 @@ static irqreturn_t pcie215_isr(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+/**
+ * pcie215_fops_open - Opens the driver.
+ */
 static int pcie215_fops_open(struct inode *inode, struct file *filp)
 {
 	filp->private_data = &pcie215_device;
 	return 0;
 }
 
+/**
+ * pcie215_fops_release - Closes the driver.
+ */
 static int pcie215_fops_release(struct inode *inode, struct file *filp)
 {
 	filp->private_data = NULL;
 	return 0;
 }
 
+/**
+ * pcie215_fops_unlocked_ioctl - Executes ioctl operations on the driver.
+ * @filp:	file handle
+ * @cmd:	ioctl identifier. This identifier may be one of:
+ *
+ *		PCIE215_IOCTL_IRQ_ENABLE
+ *		Turns on/off trigggring of the interrupts on the global basis,
+ *		i.e. by the Altera Cyclone IV fpga chip.
+ *
+ *		PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE
+ *		Configures pins for interrupt triggering. Only pins configured
+ *		this way will wake up the blocked processes. Signals asserted
+ *		on other pins are ignored. By default all pins are considered
+ *		"disabled" (unless triggers=X has been passed to the insmod,
+ *		in which case pins given in X bit mask are immediately enabled).
+ *
+ *		PCIE215_IOCTL_IRQ_TRIGGERS_DISABLE
+ *		Disables the pins from the mask of pins allowed to wake up
+ *		the processes.
+ *
+ * @arg:	ioctl parameter. The value of this argument to ioctl
+ *		is considered in context of the ioctl identifier.
+ *
+ *		PCIE215_IOCTL_IRQ_ENABLE
+ *		@arg can be 0  for global disable, or 1 for global enable.
+ *
+ *		PCIE215_IOCTL_IRQ_TRIGGERS_ENABLE
+ *		@arg is a bit mask of pins allowed for interrupt triggering.
+ *		Enabling new pins adds them to the previous mask (history is
+ *		kept).
+ *		Bit 0 is PPI-X-C0 (pin 44)
+ *		Bit 1 is PPI-X-C3 (pin 24)
+ *		Bit 2 is PPI-Y-C0 (pin 70)
+ *		Bit 3 is PPI-Y-C3 (pin 11)
+ *		Bit 4 is CTRZ1-OUT1-O/P (pin 55) - not used
+ *		Bit 5 is CTRZ2-OUT1-O/P (pin 58) - not used
+ *
+ *		PCIE215_IOCTL_IRQ_TRIGGERS_DISABLE
+ *		@arg is a bit mask of pins removed from the bit mask of pins
+ *		allowed for interrupt triggering. Previously enabled pins
+ *		which are not disabled in the mask passed to this call
+ *		stays enabled.
+ *
+ * Return: 0 if ioctl successfull, error code otherwise.
+ */
 static long pcie215_fops_unlocked_ioctl(struct file *filp, unsigned int cmd,
 					unsigned long arg)
 {
@@ -523,12 +592,11 @@ static long pcie215_fops_unlocked_ioctl(struct file *filp, unsigned int cmd,
 
 			/*
 			 * Enable interrupt triggering for specified IRQ sources.
-			 * TODO Enable dynamically passed triggers
 			 */
 			spin_lock_irqsave(&pcie215dev->lock, flags);
 
 			triggers = arg & PCIE215_IRQ_SRC_MASK;
-			pcie215dev->triggers = triggers;
+			pcie215dev->triggers |= triggers;
 			pcie215_irq_triggers_enable(pcie215dev, triggers);
 
 			spin_unlock_irqrestore(&pcie215dev->lock, flags);
@@ -566,10 +634,16 @@ static long pcie215_fops_unlocked_ioctl(struct file *filp, unsigned int cmd,
 static long pcie215_fops_compat_ioctl(struct file *filp, unsigned int cmd,
 				      unsigned long arg)
 {
-	/* TODO translate to 64 bit */
 	return pcie215_fops_unlocked_ioctl(filp, cmd, arg);
 }
 
+/**
+ * pcie215_fops_read - Put process to sleep until signal is asserted.
+ *
+ * Return: 0 if interrupted due to physical signal being asserted
+ * on configured pin(s), -ERESTARTSYS if interrupted due to software
+ * signal delivered to the process.
+ */
 static ssize_t pcie215_fops_read(struct file *filp, char __user *buf,
 				 size_t bytes_n, loff_t *offset)
 {
@@ -583,14 +657,13 @@ static ssize_t pcie215_fops_read(struct file *filp, char __user *buf,
 	clear_bit(PCIE215_FLAGS_IRQ, &pcie215dev->flags);
 
 	/*
-	 * Put process to sleep until any interrupt is triggered.
+	 * Put process to sleep until any interrupt is triggered
+	 * due to the signal being asserted on configured pin(s).
 	 * Allow to be interrupted by signals.
 	 */
-	wait_event_interruptible(pcie215dev->wait_queue,
+	return wait_event_interruptible(pcie215dev->wait_queue,
 				 test_bit(PCIE215_FLAGS_IRQ,
 					  &pcie215dev->flags));
-
-	return 0;
 }
 
 static const struct file_operations pcie215_fops =  {
@@ -611,6 +684,51 @@ static struct miscdevice pcie215_misc_dev_t = {
 	.mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH),
 };
 
+static void pcie215_config_print(struct pcie215 *pcie215dev)
+{
+	struct pci_dev *pdev = pcie215dev->pdev;
+
+	dev_info(&pdev->dev, "%s: Attached pcie215 to PCI [%s]: interrupt [%ld]"
+		 " major [%u]", __func__, pci_name(pdev),
+		 pcie215dev->irq, pcie215dev->major);
+
+	if (pcie215dev->ba_iomem)
+		dev_info(&pdev->dev, "%s: Base Address Configuration Register "
+			 "[%p] (I/O memory)", __func__, pcie215dev->ba_iomem);
+	else
+		dev_info(&pdev->dev, "%s: Base Address Configuration Register "
+			 "[%08lx]", __func__, pcie215dev->ba);
+
+	if (pcie215dev->lcr_iomem)
+		dev_info(&pdev->dev, "%s: Local Bus Configuration Register "
+			 "[%p] (I/O memory)", __func__, pcie215dev->lcr_iomem);
+	else
+		dev_info(&pdev->dev, "%s: Local Bus Configuration Register "
+			 "[%08lx]", __func__, pcie215dev->lcr);
+
+	dev_info(&pdev->dev, "%s: 8255 configured as [%02x]",
+		 __func__, pcie215dev->ppi_8255_config);
+}
+
+/**
+ * pcie215_probe - Driver's and hardware initialisation.
+ *
+ * This function performs initialisation of the PCIe215 board
+ * and of the pcie215 driver. Apart from standard steps required
+ * to initialise PCIe hardware driver does these additional steps:
+ *
+ *	- Initialise 8255 PPI
+ *	- Initialise 8254 Timer/Counter
+ *	- Disable PCIe interrupts generation by Altera
+ *	  Cyclone IV fpga of PCIe215
+ *	- If triggers=X was passed to the insmod, then:
+ *		1. Enable interrupt triggering on pins
+ *		   given in a bit mask X
+ *		2. If X > 0 then enable IRQ generation
+ *		   on a global basis
+ *
+ * Return : 0 on success, negative error code otherwise.
+ */
 static int pcie215_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 {
 	int err = 0;
@@ -675,21 +793,15 @@ static int pcie215_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		pcie215dev->ba = pci_resource_start(pdev, bar);
 	}
 
-	/* Initialise 8255 PPI. */
-	err = pcie215_init_8255(pcie215dev);
-	if (err) {
-		dev_err(&pdev->dev, "%s: pci_init_8255 failed: %d\n",
-			__func__, err);
-		goto err_disable;
-	}
+	/*
+	 * Initialise 8255 PPI.
+	 */
+	pcie215_init_8255(pcie215dev);
 
-	/* Initialise 8254 Timer/Counter. */
-	err = pcie215_init_8254(pcie215dev);
-	if (err) {
-		dev_err(&pdev->dev, "%s: pci_init_8254 failed: %d\n",
-			__func__, err);
-		goto err_disable;
-	}
+	/*
+	 * Initialise 8254 Timer/Counter.
+	 */
+	pcie215_init_8254(pcie215dev);
 
 	if (!pdev->irq) {
 		dev_err(&pdev->dev, "%s: No IRQ assigned to the device\n",
@@ -734,26 +846,11 @@ static int pcie215_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	}
 
 	pcie215dev->major = MAJOR(pcie215_misc_dev_t.this_device->devt);
-	dev_info(&pdev->dev, "%s: Attached pcie215 to PCI [%s]: interrupt [%ld]"
-		" major [%u]", __func__, pci_name(pdev), pcie215dev->irq,
-		pcie215dev->major);
 
-	if (pcie215dev->ba_iomem)
-		dev_info(&pdev->dev, "%s: Base Address Configuration Register "
-			 "[%p] (I/O memory)", __func__, pcie215dev->ba_iomem);
-	else
-		dev_info(&pdev->dev, "%s: Base Address Configuration Register "
-			 "[%08lx]", __func__, pcie215dev->ba);
-
-	if (pcie215dev->lcr_iomem)
-		dev_info(&pdev->dev, "%s: Local Bus Configuration Register "
-			 "[%p] (I/O memory)", __func__, pcie215dev->lcr_iomem);
-	else
-		dev_info(&pdev->dev, "%s: Local Bus Configuration Register "
-			 "[%08lx]", __func__, pcie215dev->lcr);
-
-	dev_info(&pdev->dev, "%s: 8255 configured as [%02x]",
-		 __func__, pcie215dev->ppi_8255_config);
+	/*
+	 * Dump the config.
+	 */
+	pcie215_config_print(pcie215dev);
 
 	if (triggers) {
 		/*

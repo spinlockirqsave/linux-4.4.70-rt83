@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS	=
-CFLAGS_RELEASE = -c -o3 -DNDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror
-CFLAGS_DEBUG = -c -g3 -O0 -DDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror
-CPPFLAGS += #compiler flags
+CFLAGS_RELEASE = -c -o3 -DNDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror -D_XOPEN_SOURCE=700
+CFLAGS_DEBUG = -c -g3 -O0 -DDEBUG -Wall -Wextra -std=c99 -pedantic -Wformat -Wno-unused-function -Wfatal-errors -Werror -D_XOPEN_SOURCE=700
+CPPFLAGS += -D_XOPEN_SOURCE=700
 LDFLAGS = #-lpcap
 LDFLAGS_D = -g #-lpcap
 LDLIBS := -pthread
